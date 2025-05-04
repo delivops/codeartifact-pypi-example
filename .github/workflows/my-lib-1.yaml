@@ -1,0 +1,33 @@
+name: Deploy Python Package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'libs/my_lib_1/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ github.token }}
+          tag_prefix: my-lib-1-v
+      
+      - name: Deploy to CodeArtifact
+        uses: delivops/python-codeartifact-action@v0.0.3
+        with:
+          lib-name: 'my-lib-1'
+          lib-path: 'libs/my_lib_1'
+          lib-version: ${{ steps.tag_version.outputs.new_version }}
+          python-version: '3.11'
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          aws-account-id: ${{ secrets.AWS_ACCOUNT_ID }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-repository: ${{ vars.CODEARTIFACT_REPOSITORY }}
